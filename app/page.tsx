@@ -16,7 +16,13 @@ export default function Home() {
         b.title.toLowerCase().includes(q) ||
         b.description.toLowerCase().includes(q) ||
         b.authority.toLowerCase().includes(q) ||
-        b.tags.some((t) => t.toLowerCase().includes(q));
+        b.tags.some((t) => t.toLowerCase().includes(q)) ||
+        b.details?.summary.toLowerCase().includes(q) ||
+        b.details?.sections.some(
+          (s) =>
+            s.heading.toLowerCase().includes(q) ||
+            s.content.toLowerCase().includes(q)
+        );
       return matchesCategory && matchesQuery;
     });
   }, [query, category]);
@@ -29,7 +35,8 @@ export default function Home() {
             BidragsGuiden
           </h1>
           <p className="mt-2 text-lg text-gray-600 max-w-2xl">
-            Hitta alla offentliga bidrag, stöd och ersättningar du har rätt till – på ett ställe.
+            Hitta alla offentliga bidrag, stöd och ersättningar du har rätt till –
+            med tydlig info direkt på sidan.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
@@ -65,7 +72,7 @@ export default function Home() {
             Inga bidrag matchade din sökning.
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4">
             {filtered.map((b) => (
               <BidragCard key={b.id} bidrag={b} />
             ))}
@@ -77,32 +84,68 @@ export default function Home() {
 }
 
 function BidragCard({ bidrag }: { bidrag: Bidrag }) {
+  const [open, setOpen] = useState(false);
+  const hasDetails = Boolean(bidrag.details);
+
   return (
-    <article className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition">
-      <div className="flex items-start justify-between gap-3">
-        <h2 className="text-lg font-semibold text-gray-900">{bidrag.title}</h2>
-        <span className="shrink-0 text-xs font-medium bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
-          {categories.find((c) => c.value === bidrag.category)?.label ?? bidrag.category}
-        </span>
+    <article className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-lg font-semibold text-gray-900">{bidrag.title}</h2>
+          <span className="shrink-0 text-xs font-medium bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+            {categories.find((c) => c.value === bidrag.category)?.label ??
+              bidrag.category}
+          </span>
+        </div>
+        <p className="mt-2 text-sm text-gray-600">{bidrag.description}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+          <span>{bidrag.authority}</span>
+          {bidrag.amount && (
+            <>
+              <span>·</span>
+              <span className="font-medium text-gray-700">{bidrag.amount}</span>
+            </>
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          {hasDetails && (
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800"
+            >
+              {open ? "Dölj detaljer" : "Visa detaljer"}
+            </button>
+          )}
+          <a
+            href={bidrag.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-gray-600 hover:text-gray-900"
+          >
+            Officiell sida →
+          </a>
+        </div>
       </div>
-      <p className="mt-2 text-sm text-gray-600 line-clamp-3">{bidrag.description}</p>
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-        <span>{bidrag.authority}</span>
-        {bidrag.amount && (
-          <>
-            <span>·</span>
-            <span className="font-medium text-gray-700">{bidrag.amount}</span>
-          </>
-        )}
-      </div>
-      <a
-        href={bidrag.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-4 inline-flex text-sm font-medium text-blue-600 hover:text-blue-800"
-      >
-        Läs mer →
-      </a>
+
+      {open && bidrag.details && (
+        <div className="border-t border-gray-100 bg-gray-50 px-5 py-5 space-y-5">
+          <p className="text-sm text-gray-700 font-medium">
+            {bidrag.details.summary}
+          </p>
+          {bidrag.details.sections.map((section) => (
+            <div key={section.heading}>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                {section.heading}
+              </h3>
+              <p className="text-sm text-gray-600 whitespace-pre-line">
+                {section.content}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </article>
   );
 }
