@@ -7,6 +7,7 @@ import {
   getPersonalizedBidrag,
   type Situation,
 } from "@/lib/personalize";
+import { CalculatorFor } from "@/components/Calculators";
 
 const questions: {
   key: keyof Situation;
@@ -18,6 +19,8 @@ const questions: {
   { key: "isSenior", label: "Är du pensionär eller snart pensionär?" },
   { key: "lowIncome", label: "Har du låg inkomst just nu?" },
 ];
+
+const HAS_CALCULATOR = new Set(["barnbidrag", "rot-rut"]);
 
 export default function Home() {
   const [query, setQuery] = useState("");
@@ -186,6 +189,9 @@ function AnswerButton({
 }
 
 function BidragCard({ bidrag }: { bidrag: Bidrag }) {
+  const [showCalc, setShowCalc] = useState(false);
+  const canCalc = HAS_CALCULATOR.has(bidrag.id);
+
   return (
     <article className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-5 md:p-6">
@@ -224,6 +230,23 @@ function BidragCard({ bidrag }: { bidrag: Bidrag }) {
                 </p>
               </div>
             ))}
+          </div>
+        )}
+
+        {canCalc && (
+          <div className="mt-5">
+            <button
+              type="button"
+              onClick={() => setShowCalc((v) => !v)}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800"
+            >
+              {showCalc ? "Dölj beräkning" : "Lägg till info / räkna"}
+            </button>
+            {showCalc && (
+              <div className="mt-3">
+                <CalculatorFor bidragId={bidrag.id} />
+              </div>
+            )}
           </div>
         )}
 
