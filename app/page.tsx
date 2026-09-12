@@ -1,14 +1,37 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { bidrag, categories, type Bidrag } from "@/lib/bidrag";
+import { categories, type Bidrag } from "@/lib/bidrag";
+import {
+  emptySituation,
+  getPersonalizedBidrag,
+  type Situation,
+} from "@/lib/personalize";
+
+const questions: {
+  key: keyof Situation;
+  label: string;
+}[] = [
+  { key: "hasChildren", label: "Har du barn under 16 år?" },
+  { key: "isStudent", label: "Studerar du?" },
+  { key: "isBusiness", label: "Driver du eller planerar du företag?" },
+  { key: "isSenior", label: "Är du pensionär eller snart pensionär?" },
+  { key: "lowIncome", label: "Har du låg inkomst just nu?" },
+];
 
 export default function Home() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
+  const [situation, setSituation] = useState<Situation>(emptySituation);
+  const [showForm, setShowForm] = useState(true);
+
+  const personalized = useMemo(
+    () => getPersonalizedBidrag(situation),
+    [situation]
+  );
 
   const filtered = useMemo(() => {
-    return bidrag.filter((b) => {
+    return personalized.filter((b) => {
       const matchesCategory = category === "all" || b.category === category;
       const q = query.toLowerCase().trim();
       const matchesQuery =
@@ -25,7 +48,18 @@ export default function Home() {
         );
       return matchesCategory && matchesQuery;
     });
-  }, [query, category]);
+  }, [personalized, query, category]);
+
+  const answeredCount = Object.values(situation).filter((v) => v !== null).length;
+
+  function setAnswer(key: keyof Situation, value: boolean) {
+    setSituation((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function resetSituation() {
+    setSituation(emptySituation);
+    setShowForm(true);
+  }
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -35,11 +69,58 @@ export default function Home() {
             BidragsGuiden
           </h1>
           <p className="mt-2 text-lg text-gray-600 max-w-2xl">
-            Hitta alla offentliga bidrag, stöd och ersättningar du har rätt till –
-            med tydlig info direkt på sidan.
+            Svara på några korta frågor så visar vi bidrag som passar din situation.
           </p>
 
-          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+          {showForm && (
+            <div className="mt-8 rounded-xl border border-gray-200 bg-gray-50 p-5 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-semibold text-gray-900">Din situation</h2>
+                {answeredCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={resetSituation}
+                    className="text-sm text-gray-500 hover:text-gray-800"
+                  >
+                    Rensa svar
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {questions.map((q) => (
+                  <div
+                    key={q.key}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                  >
+                    <span className="text-sm text-gray-700">{q.label}</span>
+                    <div className="flex gap-2">
+                      <AnswerButton
+                        active={situation[q.key] === true}
+                        onClick={() => setAnswer(q.key, true)}
+                      >
+                        Ja
+                      </AnswerButton>
+                      <AnswerButton
+                        active={situation[q.key] === false}
+                        onClick={() => setAnswer(q.key, false)}
+                      >
+                        Nej
+                      </AnswerButton>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {answeredCount > 0 && (
+                <p className="text-sm text-green-700">
+                  Visar bidrag anpassade efter dina svar.
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <input
               type="search"
               placeholder="Sök bidrag, myndighet eller ämne..."
@@ -64,12 +145,13 @@ export default function Home() {
 
       <section className="max-w-5xl mx-auto px-4 py-8">
         <p className="text-sm text-gray-500 mb-4">
-          Visar {filtered.length} av {bidrag.length} bidrag
+          Visar {filtered.length} bidrag
+          {answeredCount > 0 ? " anpassade efter din situation" : ""}
         </p>
 
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
-            Inga bidrag matchade din sökning.
+            Inga bidrag matchade. Prova att ändra svar eller sökning.
           </div>
         ) : (
           <div className="grid gap-4">
@@ -80,6 +162,30 @@ export default function Home() {
         )}
       </section>
     </main>
+  );
+}
+
+function AnswerButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-4 py-1.5 rounded-full text-sm font-medium border transition ${
+        active
+          ? "bg-blue-600 text-white border-blue-600"
+          : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
