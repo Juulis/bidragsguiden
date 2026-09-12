@@ -14,4 +14,15 @@ describe("Home page", () => {
       screen.getByText(/Hitta alla offentliga bidrag/i)
     ).toBeInTheDocument();
   });
+
+  it("renders search input", () => {
+    render(<Home />);
+    expect(screen.getByPlaceholderText(/Sök bidrag/i)).toBeInTheDocument();
+  });
+
+  it("renders bidrag cards", () => {
+    render(<Home />);
+    expect(screen.getByText(/Bostadsbidrag/i)).toBeInTheDocument();
+    expect(screen.getByText(/Barnbidrag/i)).toBeInTheDocument();
+  });
 });
