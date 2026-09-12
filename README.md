@@ -16,9 +16,24 @@ npm run dev
 
 Öppna [http://localhost:3000](http://localhost:3000)
 
+## Tester
+
+```bash
+npm test          # watch-läge
+npm run test:run  # en gång
+```
+
+## Branch-strategi
+
+- `main` – produktion (deployas till GitHub Pages)
+- `develop` – integrationsbranch
+- Feature-branches → PR mot `develop` eller `main`
+
+Alla PR:s kör automatiskt tester + build via GitHub Actions.
+
 ## Deploy
 
-Sidan deployas automatiskt till GitHub Pages vid varje push till `main` via GitHub Actions.
+Sidan deployas automatiskt till GitHub Pages vid varje push till `main`.
 
 ### Aktivera Pages (en gång)
 1. Gå till repo → **Settings** → **Pages**
@@ -30,3 +45,4 @@ Sidan deployas automatiskt till GitHub Pages vid varje push till `main` via GitH
 - React 19
 - TypeScript
 - Tailwind CSS
+- Vitest + Testing Library
