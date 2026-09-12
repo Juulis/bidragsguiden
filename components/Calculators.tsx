@@ -13,9 +13,12 @@ const FLERBARN: Record<number, number> = {
 
 const GRUND = 1250;
 
-// Ungefärliga CSN-nivåer (helår/vecka-nivå, förenklat per 4 veckor)
-const CSN_BIDRAG_HELTID = 3292; // ca per 4 veckor, vägledning
+// Ungefärliga CSN-nivåer per 4 veckor (vägledning – kan ändras)
+const CSN_BIDRAG_HELTID = 3292;
 const CSN_LAN_HELTID = 7584;
+const CSN_TILLAGGSLAN_HELTID = 4056; // ungefärlig nivå för tilläggslån
+// Extra tillägg (bidragsdel) – förenklad, t.ex. vid vårdnad om barn
+const CSN_EXTRA_TILLAGG_PER_BARN = 600; // vägledande per 4 veckor
 
 export function BarnbidragKalkyl() {
   const [children, setChildren] = useState(1);
@@ -125,16 +128,30 @@ export function RotRutKalkyl() {
 export function CsnKalkyl() {
   const [takt, setTakt] = useState<100 | 75 | 50>(100);
   const [medLan, setMedLan] = useState(true);
+  const [tillaggslan, setTillaggslan] = useState(false);
+  const [barn, setBarn] = useState(0);
+  const [extraTillagg, setExtraTillagg] = useState(false);
 
   const faktor = takt / 100;
   const bidrag = Math.round(CSN_BIDRAG_HELTID * faktor);
   const lan = medLan ? Math.round(CSN_LAN_HELTID * faktor) : 0;
-  const total = bidrag + lan;
+  const tillaggslanBelopp =
+    medLan && tillaggslan ? Math.round(CSN_TILLAGGSLAN_HELTID * faktor) : 0;
+  // Extra tillägg (t.ex. vid vårdnad om barn) – förenklad vägledning
+  const barnTillagg =
+    extraTillagg && barn > 0
+      ? Math.round(CSN_EXTRA_TILLAGG_PER_BARN * Math.min(barn, 3) * faktor)
+      : 0;
+
+  const totalBidrag = bidrag + barnTillagg;
+  const totalLan = lan + tillaggslanBelopp;
+  const total = totalBidrag + totalLan;
 
   return (
     <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-4 space-y-4">
       <h4 className="text-sm font-semibold text-gray-900">Räkna på CSN (per 4 veckor)</h4>
-      <div className="flex flex-col sm:flex-row gap-4">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="flex flex-col gap-1 text-sm text-gray-700">
           Studietakt
           <select
@@ -147,26 +164,88 @@ export function CsnKalkyl() {
             <option value={50}>Halvtid (50%)</option>
           </select>
         </label>
-        <label className="flex items-center gap-2 text-sm text-gray-700 pt-6 sm:pt-8">
+
+        <label className="flex flex-col gap-1 text-sm text-gray-700">
+          Antal barn du har vårdnad om
+          <select
+            value={barn}
+            onChange={(e) => setBarn(Number(e.target.value))}
+            className="rounded-md border border-gray-300 px-3 py-2 bg-white"
+          >
+            {[0, 1, 2, 3, 4].map((n) => (
+              <option key={n} value={n}>
+                {n === 0 ? "Inga barn" : `${n} barn`}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="flex flex-col gap-2 text-sm text-gray-700">
+        <label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={medLan}
-            onChange={(e) => setMedLan(e.target.checked)}
+            onChange={(e) => {
+              setMedLan(e.target.checked);
+              if (!e.target.checked) setTillaggslan(false);
+            }}
             className="rounded border-gray-300"
           />
           Inkludera studielån
         </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={tillaggslan}
+            disabled={!medLan}
+            onChange={(e) => setTillaggslan(e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          Tilläggslån (t.ex. om du är över 30 eller uppfyller andra villkor)
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={extraTillagg}
+            disabled={barn === 0}
+            onChange={(e) => setExtraTillagg(e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          Extra tillägg / merkostnad kopplat till barn (förenklad uppskattning)
+        </label>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-        <ResultBox label="Bidrag" value={`${bidrag.toLocaleString("sv-SE")} kr`} />
-        <ResultBox label="Lån" value={`${lan.toLocaleString("sv-SE")} kr`} />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+        <ResultBox label="Studiebidrag" value={`${bidrag.toLocaleString("sv-SE")} kr`} />
         <ResultBox
-          label="Totalt / 4 veckor"
+          label="Barnrelaterat tillägg"
+          value={`${barnTillagg.toLocaleString("sv-SE")} kr`}
+        />
+        <ResultBox label="Studielån" value={`${lan.toLocaleString("sv-SE")} kr`} />
+        <ResultBox
+          label="Tilläggslån"
+          value={`${tillaggslanBelopp.toLocaleString("sv-SE")} kr`}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+        <ResultBox
+          label="Totalt bidrag"
+          value={`${totalBidrag.toLocaleString("sv-SE")} kr`}
+        />
+        <ResultBox
+          label="Totalt lån"
+          value={`${totalLan.toLocaleString("sv-SE")} kr`}
+        />
+        <ResultBox
+          label="Summa / 4 veckor"
           value={`${total.toLocaleString("sv-SE")} kr`}
           highlight
         />
       </div>
-      <Disclaimer text="Vägledande belopp baserade på ungefärliga nivåer. Se alltid aktuella belopp på csn.se." />
+
+      <Disclaimer text="Vägledande belopp. Tilläggslån och extra tillägg har särskilda villkor (ålder, inkomst, vårdnad m.m.). Kontrollera alltid på csn.se vad du faktiskt kan få." />
     </div>
   );
 }
@@ -176,7 +255,6 @@ export function BostadsbidragKalkyl() {
   const [hyra, setHyra] = useState(8000);
   const [inkomst, setInkomst] = useState(18000);
 
-  // Mycket förenklad illustrativ modell – inte officiell formel
   const boendeDel = Math.min(Math.max(hyra - 3000, 0), 6000) * 0.5;
   const barnBonus = barn * 400;
   const inkomstAvdrag = Math.max(0, (inkomst - 12000) * 0.2);
@@ -232,7 +310,7 @@ export function BostadsbidragKalkyl() {
           highlight
         />
       </div>
-      <Disclaimer text="Endast en grov illustration – den riktiga formeln hos Försäkringskassan är mer komplex och beror på fler faktorer." />
+      <Disclaimer text="Endast en grov illustration – den riktiga formeln hos Försäkringskassan är mer komplex." />
     </div>
   );
 }
