@@ -7,7 +7,7 @@ import {
   getPersonalizedBidrag,
   type Situation,
 } from "@/lib/personalize";
-import { CalculatorFor } from "@/components/Calculators";
+import { CalculatorFor, CALCULATOR_IDS } from "@/components/Calculators";
 
 const questions: {
   key: keyof Situation;
@@ -19,8 +19,6 @@ const questions: {
   { key: "isSenior", label: "Är du pensionär eller snart pensionär?" },
   { key: "lowIncome", label: "Har du låg inkomst just nu?" },
 ];
-
-const HAS_CALCULATOR = new Set(["barnbidrag", "rot-rut"]);
 
 export default function Home() {
   const [query, setQuery] = useState("");
@@ -190,7 +188,7 @@ function AnswerButton({
 
 function BidragCard({ bidrag }: { bidrag: Bidrag }) {
   const [showCalc, setShowCalc] = useState(false);
-  const canCalc = HAS_CALCULATOR.has(bidrag.id);
+  const canCalc = CALCULATOR_IDS.has(bidrag.id);
 
   return (
     <article className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
