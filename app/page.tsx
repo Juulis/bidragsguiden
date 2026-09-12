@@ -23,7 +23,6 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [situation, setSituation] = useState<Situation>(emptySituation);
-  const [showForm, setShowForm] = useState(true);
 
   const personalized = useMemo(
     () => getPersonalizedBidrag(situation),
@@ -58,7 +57,6 @@ export default function Home() {
 
   function resetSituation() {
     setSituation(emptySituation);
-    setShowForm(true);
   }
 
   return (
@@ -69,56 +67,54 @@ export default function Home() {
             BidragsGuiden
           </h1>
           <p className="mt-2 text-lg text-gray-600 max-w-2xl">
-            Svara på några korta frågor så visar vi bidrag som passar din situation.
+            All viktig info och hur det fungerar – direkt här. Officiella sidor finns som referens.
           </p>
 
-          {showForm && (
-            <div className="mt-8 rounded-xl border border-gray-200 bg-gray-50 p-5 space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="font-semibold text-gray-900">Din situation</h2>
-                {answeredCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={resetSituation}
-                    className="text-sm text-gray-500 hover:text-gray-800"
-                  >
-                    Rensa svar
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                {questions.map((q) => (
-                  <div
-                    key={q.key}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-                  >
-                    <span className="text-sm text-gray-700">{q.label}</span>
-                    <div className="flex gap-2">
-                      <AnswerButton
-                        active={situation[q.key] === true}
-                        onClick={() => setAnswer(q.key, true)}
-                      >
-                        Ja
-                      </AnswerButton>
-                      <AnswerButton
-                        active={situation[q.key] === false}
-                        onClick={() => setAnswer(q.key, false)}
-                      >
-                        Nej
-                      </AnswerButton>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
+          <div className="mt-8 rounded-xl border border-gray-200 bg-gray-50 p-5 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-semibold text-gray-900">Din situation</h2>
               {answeredCount > 0 && (
-                <p className="text-sm text-green-700">
-                  Visar bidrag anpassade efter dina svar.
-                </p>
+                <button
+                  type="button"
+                  onClick={resetSituation}
+                  className="text-sm text-gray-500 hover:text-gray-800"
+                >
+                  Rensa svar
+                </button>
               )}
             </div>
-          )}
+
+            <div className="space-y-3">
+              {questions.map((q) => (
+                <div
+                  key={q.key}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                >
+                  <span className="text-sm text-gray-700">{q.label}</span>
+                  <div className="flex gap-2">
+                    <AnswerButton
+                      active={situation[q.key] === true}
+                      onClick={() => setAnswer(q.key, true)}
+                    >
+                      Ja
+                    </AnswerButton>
+                    <AnswerButton
+                      active={situation[q.key] === false}
+                      onClick={() => setAnswer(q.key, false)}
+                    >
+                      Nej
+                    </AnswerButton>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {answeredCount > 0 && (
+              <p className="text-sm text-green-700">
+                Visar bidrag anpassade efter dina svar.
+              </p>
+            )}
+          </div>
 
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <input
@@ -154,7 +150,7 @@ export default function Home() {
             Inga bidrag matchade. Prova att ändra svar eller sökning.
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {filtered.map((b) => (
               <BidragCard key={b.id} bidrag={b} />
             ))}
@@ -190,68 +186,60 @@ function AnswerButton({
 }
 
 function BidragCard({ bidrag }: { bidrag: Bidrag }) {
-  const [open, setOpen] = useState(false);
-  const hasDetails = Boolean(bidrag.details);
-
   return (
     <article className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="p-5">
+      <div className="p-5 md:p-6">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="text-lg font-semibold text-gray-900">{bidrag.title}</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{bidrag.title}</h2>
           <span className="shrink-0 text-xs font-medium bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
             {categories.find((c) => c.value === bidrag.category)?.label ??
               bidrag.category}
           </span>
         </div>
-        <p className="mt-2 text-sm text-gray-600">{bidrag.description}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-          <span>{bidrag.authority}</span>
+
+        <p className="mt-2 text-gray-700">{bidrag.description}</p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+          <span className="font-medium text-gray-800">{bidrag.authority}</span>
           {bidrag.amount && (
             <>
               <span>·</span>
-              <span className="font-medium text-gray-700">{bidrag.amount}</span>
+              <span>{bidrag.amount}</span>
             </>
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-3">
-          {hasDetails && (
-            <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
-              className="text-sm font-medium text-blue-600 hover:text-blue-800"
-            >
-              {open ? "Dölj detaljer" : "Visa detaljer"}
-            </button>
-          )}
+        {bidrag.details && (
+          <div className="mt-6 space-y-5 border-t border-gray-100 pt-5">
+            <p className="text-sm font-medium text-gray-800">
+              {bidrag.details.summary}
+            </p>
+            {bidrag.details.sections.map((section) => (
+              <div key={section.heading}>
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                  {section.heading}
+                </h3>
+                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
+                  {section.content}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p className="mt-6 text-xs text-gray-400">
+          Referens:{" "}
           <a
             href={bidrag.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900"
+            className="underline hover:text-gray-600"
           >
-            Officiell sida →
+            officiell information hos {bidrag.authority}
           </a>
-        </div>
+          . Kontrollera alltid aktuella belopp och villkor.
+        </p>
       </div>
-
-      {open && bidrag.details && (
-        <div className="border-t border-gray-100 bg-gray-50 px-5 py-5 space-y-5">
-          <p className="text-sm text-gray-700 font-medium">
-            {bidrag.details.summary}
-          </p>
-          {bidrag.details.sections.map((section) => (
-            <div key={section.heading}>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                {section.heading}
-              </h3>
-              <p className="text-sm text-gray-600 whitespace-pre-line">
-                {section.content}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
     </article>
   );
 }

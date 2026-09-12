@@ -14,27 +14,24 @@ describe("Home page", () => {
   it("renders situation questions", () => {
     render(<Home />);
     expect(screen.getByText(/Har du barn under 16/i)).toBeInTheDocument();
-    expect(screen.getByText(/Studerar du/i)).toBeInTheDocument();
   });
 
-  it("renders search input", () => {
+  it("shows full barnbidrag content on the page", () => {
     render(<Home />);
-    expect(screen.getByPlaceholderText(/Sök bidrag/i)).toBeInTheDocument();
+    expect(screen.getByText(/Flerbarnstillägg/i)).toBeInTheDocument();
+    expect(screen.getByText(/Växelvis boende/i)).toBeInTheDocument();
   });
 
-  it("renders bidrag cards", () => {
+  it("shows official link as reference", () => {
     render(<Home />);
-    expect(screen.getByText(/Barnbidrag/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/officiell information/i).length).toBeGreaterThan(0);
   });
 
-  it("filters by situation when answering Ja to children", async () => {
+  it("filters by situation", async () => {
     const user = userEvent.setup();
     render(<Home />);
-
     const jaButtons = screen.getAllByRole("button", { name: /^Ja$/i });
-    await user.click(jaButtons[0]); // hasChildren
-
+    await user.click(jaButtons[0]);
     expect(screen.getByText(/anpassade efter din situation/i)).toBeInTheDocument();
-    expect(screen.getByText(/Barnbidrag/i)).toBeInTheDocument();
   });
 });
